@@ -1,0 +1,1 @@
+ALTER TABLE "coupons" ADD COLUMN "allow_multiple" boolean DEFAULT false NOT NULL;

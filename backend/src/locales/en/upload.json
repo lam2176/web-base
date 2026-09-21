@@ -1,0 +1,9 @@
+{
+  "success": "File uploaded successfully",
+  "uploadFailed": "File upload failed",
+  "noFile": "Please select a file to upload",
+  "fileTooLarge": "File size exceeds maximum allowed size of {maxSize}",
+  "fileTypeNotSupported": "File type not supported",
+  "deleteSuccess": "File deleted successfully",
+  "deleteFailed": "File deletion failed"
+}

@@ -1,0 +1,461 @@
+
+You are an expert fullstack developer. Please generate a **complete project base** for a simple e-commerce & product showcase system using the following stack:
+
+## 🧩 General project description
+Build a modern base project for a **single-store e-commerce website** (not multi-tenant).
+The project should have **two folders**:
+- `/frontend` (Next.js 14+)
+- `/backend` (NestJS 10+)
+
+The system should be **clean, extendable, modular**, and **inspired by WordPress flexibility** — allowing easy customization of pages, store info, banners, and product data.
+
+---
+
+## ⚙️ Backend (NestJS)
+
+**Tech stack**
+- NestJS 10+
+- PostgreSQL
+- Drizzle ORM (NOT Prisma)
+- TypeScript
+- Validation (class-validator)
+- dotenv for environment configuration
+- Swagger for API docs
+- Multer for file upload (product & media images)
+- JWT-based Auth (admin only, with refresh token)
+- CORS enabled
+- Winston or Pino for logging
+- Helmet.js for security headers
+- Rate limiting (throttler)
+
+**Folder structure**
+```
+backend/
+ ├─ src/
+ │   ├─ main.ts
+ │   ├─ app.module.ts
+ │   ├─ config/
+ │   ├─ db/
+ │   │   ├─ schema/
+ │   │   │   ├─ product.schema.ts
+ │   │   │   ├─ category.schema.ts
+ │   │   │   ├─ order.schema.ts
+ │   │   │   ├─ user.schema.ts
+ │   │   │   ├─ store_info.schema.ts
+ │   │   │   ├─ page.schema.ts
+ │   │   │   ├─ media.schema.ts
+ │   │   │   ├─ banner.schema.ts
+ │   │   │   ├─ coupon.schema.ts
+ │   │   │   ├─ discount_code.schema.ts
+ │   │   │   ├─ translation.schema.ts
+ │   │   ├─ drizzle.config.ts
+ │   ├─ modules/
+ │   │   ├─ product/
+ │   │   ├─ category/
+ │   │   ├─ cart/
+ │   │   ├─ order/
+ │   │   ├─ user/
+ │   │   ├─ auth/
+ │   │   ├─ store/
+ │   │   ├─ page/
+ │   │   ├─ media/
+ │   │   ├─ banner/
+ │   │   ├─ coupon/
+ │   │   ├─ discount-code/
+ │   │   ├─ translation/
+ │   ├─ shared/
+ │   │   ├─ dto/
+ │   │   ├─ utils/
+ │   │   ├─ guards/
+ │   │   ├─ interceptors/
+ │   │   ├─ decorators/
+ │   │   ├─ filters/
+ ├─ drizzle/
+ │   ├─ migrations/
+ ├─ uploads/ (for local file storage)
+```
+
+**Main backend features**
+- ✅ CRUD for **products**, with multiple images, category, SEO fields (slug, meta title, meta description)
+  - Product variants support (size, color, etc.)
+  - Inventory management (stock quantity, out_of_stock status)
+  - Pricing: original_price, sale_price, discount_percentage
+- ✅ CRUD for **categories** (hierarchical, optional parent_id)
+- ✅ CRUD for **pages** (like WordPress pages — "About", "Contact")
+- ✅ **Media Library**: upload and manage reusable images (store locally with option for AWS S3)
+  - Image optimization/resize on upload
+  - Support JPG, PNG, WebP formats
+  - File size limits (configurable)
+- ✅ **Store info module**: logo, name, address, hotline, social links, bank info, description
+  - Multi-currency support (VND, USD, etc.) - configurable from admin
+  - Fixed shipping fee (editable from admin)
+- ✅ **Banner/Slider management**:
+  - Fields: image, title, subtitle, link, order, status (active/inactive)
+  - Display order control
+- ✅ **Cart & Order** management:
+  - Add to cart, checkout creates an order
+  - Order status: pending, confirmed, shipping, completed, cancelled
+  - Shows bank info for manual transfer (no online payment integration)
+  - Apply discount codes during checkout
+- ✅ **Coupon System** (Event-based discounts):
+  - Apply discount to all products or specific categories
+  - Time-limited (start_date, end_date)
+  - Discount percentage or fixed amount
+  - Auto-apply during active period
+- ✅ **Discount Code System**:
+  - User enters code at checkout
+  - Limited quantity (max usage count)
+  - Time-limited (expiry date)
+  - Discount percentage or fixed amount
+  - Single-use or multi-use codes
+- ✅ **Multi-language support** (i18n):
+  - Vietnamese (vi) and English (en)
+  - Translation for products, categories, pages, store info
+  - Language switcher in frontend
+- ✅ JWT authentication for admin with refresh token
+- ✅ Role-based access control (Admin, Staff roles)
+- ✅ Swagger documentation for APIs
+- ✅ Configurable `.env` for DB and store settings
+- ✅ SEO fields per entity (meta title, description, Open Graph tags)
+- ✅ Search & Filter: full-text search, price range, category filter, sort options
+- ✅ Pagination: limit/offset based
+- ✅ Error handling: standardized API error format
+- ✅ Logging: Winston for application logs
+- ✅ Security: Helmet.js, rate limiting, input validation, XSS protection
+- ✅ Seed data script for testing
+
+---
+
+## 🎨 Frontend (Next.js)
+
+**Tech stack**
+- Next.js 14 (App Router)
+- TypeScript
+- TailwindCSS
+- Axios (call backend APIs)
+- Zustand (state management)
+- React Hook Form (form control)
+- Next Image component
+- next-intl (for i18n - Vietnamese & English)
+- SEO-friendly metadata tags (Open Graph, Twitter cards)
+- Responsive layout (mobile-first)
+- Headless UI or shadcn/ui (for UI components)
+
+**Folder structure**
+```
+frontend/
+ ├─ app/
+ │   ├─ [locale]/  (for i18n routing: vi, en)
+ │   │   ├─ layout.tsx
+ │   │   ├─ page.tsx (landing page with hero, banner, featured products)
+ │   │   ├─ products/
+ │   │   │   ├─ page.tsx (list view, filters, search, sort, price range)
+ │   │   │   ├─ [slug]/page.tsx (product detail with variants, images carousel)
+ │   │   ├─ categories/
+ │   │   │   ├─ [slug]/page.tsx (category-based listing)
+ │   │   ├─ pages/
+ │   │   │   ├─ [slug]/page.tsx (CMS page: about, contact, etc.)
+ │   │   ├─ cart/
+ │   │   │   ├─ page.tsx
+ │   │   ├─ checkout/
+ │   │   │   ├─ page.tsx (order review, discount code input, show bank info)
+ │   │   ├─ admin/
+ │   │   │   ├─ layout.tsx (admin layout with sidebar)
+ │   │   │   ├─ page.tsx (dashboard with analytics)
+ │   │   │   ├─ login/
+ │   │   │   ├─ products/
+ │   │   │   ├─ categories/
+ │   │   │   ├─ pages/
+ │   │   │   ├─ media/
+ │   │   │   ├─ store/
+ │   │   │   ├─ banners/
+ │   │   │   ├─ coupons/
+ │   │   │   ├─ discount-codes/
+ │   │   │   ├─ orders/
+ │   │   │   ├─ settings/ (currency, shipping fee, translations)
+ ├─ components/
+ │   ├─ ui/ (reusable UI components)
+ │   ├─ layout/ (Header, Footer, Sidebar)
+ │   ├─ product/ (ProductCard, ProductGallery, etc.)
+ │   ├─ admin/ (admin-specific components)
+ ├─ hooks/
+ ├─ lib/
+ │   ├─ api/ (axios instance, API calls)
+ │   ├─ utils/
+ ├─ store/ (Zustand stores)
+ ├─ types/
+ ├─ public/
+ ├─ messages/ (i18n translation files: vi.json, en.json)
+ ├─ styles/
+```
+
+**Frontend features**
+- 🌐 **Multi-language**: Vietnamese (vi) and English (en) with language switcher
+- 🏠 **Landing page**:
+  - Dynamic banners/sliders (editable via admin)
+  - Featured products section
+  - Active coupons display
+  - Store info in footer
+- 🧭 **Product list page**:
+  - Full-text search
+  - Category filter (hierarchical)
+  - Price range filter
+  - Sort options (price, date, name)
+  - Pagination
+  - Show applied coupon discounts
+- 📄 **Product detail page**:
+  - Image gallery/carousel
+  - Product variants selection (size, color)
+  - Stock availability indicator
+  - Related products
+  - Add to cart with quantity
+  - SEO meta tags (title, description, Open Graph)
+  - Breadcrumbs navigation
+- 🛒 **Cart page**:
+  - Add/remove/update quantity
+  - Show original price and discounted price (if coupon active)
+  - Calculate subtotal, shipping fee, discount, total
+  - Currency display (based on store settings)
+- 💳 **Checkout page**:
+  - Customer info form
+  - Order review with all items
+  - Discount code input field
+  - Apply discount code validation
+  - Show final price with all discounts
+  - Display bank info for manual transfer
+  - Create order on submit
+- 🧑‍💼 **Admin dashboard**:
+  - Analytics: total orders, revenue, popular products
+  - Manage products (CRUD, bulk actions, image upload)
+  - Manage categories (hierarchical tree view)
+  - Manage CMS pages
+  - Media library (upload, browse, delete images)
+  - Store settings (logo, info, currency, shipping fee)
+  - Banner management (upload, order, active/inactive)
+  - Coupon management (create event-based discounts)
+  - Discount code management (generate codes, set limits)
+  - Order management (view, update status)
+  - Translation management (edit content in vi/en)
+- 🧾 **Store settings page**:
+  - Edit store name, logo, description, hotline, address
+  - Configure currency (VND, USD, etc.)
+  - Set fixed shipping fee
+  - Bank account info for transfers
+  - Social media links
+- 📢 **Banner management**:
+  - Upload images
+  - Set title, subtitle, link
+  - Control display order
+  - Active/inactive status
+- 🎟️ **Coupon & Discount system**:
+  - Apply event-based coupons automatically
+  - Input discount codes at checkout
+  - Show discount amount in cart/checkout
+  - Validate code expiry and usage limits
+- 🔍 **SEO-ready**:
+  - Dynamic meta title, description per page/product
+  - Open Graph tags for social sharing
+  - Twitter card meta tags
+  - Sitemap generation
+  - Structured data (JSON-LD) for products
+- 📱 **Mobile responsive**:
+  - Mobile-first design
+  - Touch-friendly UI
+  - Hamburger menu for mobile
+  - Optimized images (Next Image)
+- 🔐 **Admin authentication**:
+  - JWT-based login
+  - Protected admin routes
+  - Token refresh mechanism
+  - Logout functionality
+- ⚡ **Performance optimizations**:
+  - Image lazy loading
+  - Code splitting
+  - Skeleton loading states
+  - Optimistic UI updates
+
+---
+
+## 📦 Shared design goals
+- Clean modular architecture for both FE/BE
+- Type-safe shared DTOs/interfaces
+- Mobile responsive UI (mobile-first approach)
+- Easy local development setup
+- Docker Compose for full-stack deployment (backend + frontend + PostgreSQL)
+- `.env.example` files with all required variables documented
+- Comprehensive README.md with setup instructions
+- API standardized response format:
+  ```json
+  {
+    "success": true,
+    "data": {},
+    "message": "Success message",
+    "error": null
+  }
+  ```
+
+---
+
+## 🧠 Extra features inspired by WordPress
+- CMS-like pages (`/about`, `/contact`, `/policy`, etc.) editable from admin
+- Media Library system (reusable images and files)
+- Store Settings section (edit store logo, address, hotline, social links, bank info, currency, shipping)
+- Banner/Slider management (for homepage hero section with order control)
+- Category & Tag system for better product grouping (hierarchical categories)
+- SEO settings per entity (meta title, meta description, slug, Open Graph tags)
+- Global store context for shared data (used in header/footer automatically)
+- Modular admin panel (can add new sections easily)
+- Multi-language content management (translate products, categories, pages)
+- Flexible discount system (coupons for events, discount codes for customers)
+
+---
+
+## 🎯 Deliverables
+Generate the entire folder structure and base code with:
+- Complete backend modules with controllers, services, DTOs, and schemas
+- Complete frontend pages with example UI and API integration
+- Drizzle ORM schemas with relationships and migrations
+- Sample seed data for testing (products, categories, store info)
+- Docker Compose configuration for easy deployment
+- Comprehensive README.md for both backend and frontend
+- `.env.example` files with all required environment variables
+- API documentation (Swagger) for all endpoints
+- i18n setup with sample translations (vi.json, en.json)
+
+Use **Drizzle ORM** for schema and migration setup.
+
+---
+
+## 📊 Database Schema Overview
+
+**Key entities and relationships:**
+1. **products**
+   - id, slug, name_vi, name_en, description_vi, description_en
+   - original_price, sale_price, discount_percentage
+   - stock_quantity, is_out_of_stock
+   - category_id (FK), featured, status
+   - meta_title, meta_description
+   - created_at, updated_at
+
+2. **product_variants**
+   - id, product_id (FK), name, value (e.g., "Color: Red")
+   - price_adjustment, stock_quantity
+
+3. **product_images**
+   - id, product_id (FK), media_id (FK), order, is_primary
+
+4. **categories**
+   - id, slug, name_vi, name_en, description_vi, description_en
+   - parent_id (FK - self reference for hierarchy)
+   - order, status
+
+5. **media**
+   - id, filename, filepath, mimetype, size
+   - created_at
+
+6. **pages**
+   - id, slug, title_vi, title_en, content_vi, content_en
+   - meta_title, meta_description, status
+
+7. **store_info**
+   - id, name_vi, name_en, logo_id (FK to media)
+   - address, hotline, email, description_vi, description_en
+   - currency, shipping_fee, bank_info
+   - social_links (JSON)
+
+8. **banners**
+   - id, title_vi, title_en, subtitle_vi, subtitle_en
+   - image_id (FK to media), link, order, status
+
+9. **coupons** (event-based discounts)
+   - id, code, name_vi, name_en
+   - discount_type (percentage/fixed), discount_value
+   - start_date, end_date, status
+   - apply_to (all/category), category_ids (JSON array)
+
+10. **discount_codes** (customer input codes)
+    - id, code, name
+    - discount_type (percentage/fixed), discount_value
+    - max_usage, current_usage, expiry_date, status
+
+11. **users**
+    - id, email, password (hashed), role (admin/staff)
+    - refresh_token, created_at
+
+12. **orders**
+    - id, order_number, customer_name, customer_email, customer_phone
+    - customer_address, subtotal, shipping_fee, discount_amount
+    - total, status (pending/confirmed/shipping/completed/cancelled)
+    - discount_code_id (FK), notes, created_at
+
+13. **order_items**
+    - id, order_id (FK), product_id (FK)
+    - product_name, variant_name, quantity, price, total
+
+14. **translations** (for dynamic content)
+    - id, entity_type, entity_id, field, locale, value
+
+---
+
+## 🔐 Authentication Flow
+1. Admin login → POST `/api/auth/login` → returns `access_token` + `refresh_token`
+2. Store tokens in httpOnly cookies or localStorage
+3. Include `Authorization: Bearer <access_token>` in API requests
+4. Refresh token → POST `/api/auth/refresh` when access token expires
+5. Protected routes use JWT Guard in backend
+6. Frontend redirects to login if unauthorized
+
+---
+
+## 🛒 Shopping Flow
+1. Browse products → Filter by category, search, price range
+2. View product detail → Select variant → Add to cart (stored in Zustand)
+3. View cart → Update quantities → Apply discount code (optional)
+4. Checkout → Fill customer info → Review order (subtotal + shipping + discount)
+5. Submit order → Backend creates order → Returns order confirmation + bank info
+6. Show success page with bank transfer details
+
+---
+
+## 🎟️ Discount Logic
+- **Coupons**: Auto-apply if active (check start_date/end_date)
+  - Apply to all products or specific categories
+  - Calculate discount in cart/checkout
+- **Discount Codes**: User manually enters code
+  - Validate: code exists, not expired, usage count < max_usage
+  - Apply discount if valid
+  - Increment usage count on order creation
+- Priority: Discount code overrides coupon if both applicable
+
+---
+
+## 🌐 i18n Implementation
+- Backend: Store translations in database (`translations` table) or JSON fields per entity
+- Frontend: Use `next-intl` with `/[locale]/` routing
+- Language switcher component changes locale → re-fetches translated content
+- API returns content based on `Accept-Language` header or `locale` query param
+
+---
+
+## 📝 Additional Notes
+- **No Blog/News section** required
+- **No Social Login** (Facebook, Google OAuth) needed
+- Use **local file storage** for images initially (easy to migrate to S3 later)
+- **Image optimization**: Use sharp library in backend to resize on upload
+- **Error handling**: Consistent error format across all APIs
+- **Logging**: Log all API requests, errors, and critical operations
+- **Seed script**: Create sample data for quick testing and demo
+
+---
+
+## ✅ Success Criteria
+The generated base code should:
+- ✅ Be runnable immediately after `npm install` and database setup
+- ✅ Have working API endpoints documented in Swagger
+- ✅ Have functional frontend pages (even with mock data)
+- ✅ Support multi-language switching (vi/en)
+- ✅ Allow admin to manage products, categories, pages, banners, coupons, discount codes
+- ✅ Support complete shopping flow from browsing to checkout
+- ✅ Have proper TypeScript types throughout
+- ✅ Be production-ready with security best practices
+- ✅ Be easily extendable for future features

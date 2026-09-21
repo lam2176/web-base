@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: shop_dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '${POSTGRES_PORT}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shop_dev-network
+
+  adminer:
+    image: adminer:latest
+    container_name: shop_dev-adminer
+    restart: unless-stopped
+    ports:
+      - '${ADMINER_PORT}:8080'
+    depends_on:
+      - postgres
+    networks:
+      - shop_dev-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  shop_dev-network:
+    driver: bridge

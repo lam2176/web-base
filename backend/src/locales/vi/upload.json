@@ -1,0 +1,9 @@
+{
+  "success": "Tải file lên thành công",
+  "uploadFailed": "Tải file lên thất bại",
+  "noFile": "Vui lòng chọn file để tải lên",
+  "fileTooLarge": "Kích thước file vượt quá giới hạn cho phép {maxSize}",
+  "fileTypeNotSupported": "Loại file không được hỗ trợ",
+  "deleteSuccess": "Xóa file thành công",
+  "deleteFailed": "Xóa file thất bại"
+}

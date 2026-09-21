@@ -1,0 +1,2 @@
+ALTER TABLE "store_info" ADD COLUMN "bank_qr_id" integer;--> statement-breakpoint
+ALTER TABLE "store_info" ADD CONSTRAINT "store_info_bank_qr_id_media_id_fk" FOREIGN KEY ("bank_qr_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;

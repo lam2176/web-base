@@ -1,0 +1,1 @@
+ALTER TABLE "store_info" ADD COLUMN "map_url" text;

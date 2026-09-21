@@ -1,0 +1,9 @@
+{
+  "success": "Success",
+  "error": "An error occurred",
+  "notFound": "Not found",
+  "unauthorized": "Unauthorized",
+  "forbidden": "Forbidden",
+  "badRequest": "Bad request",
+  "internalServerError": "Internal server error"
+}

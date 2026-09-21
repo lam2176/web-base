@@ -1,0 +1,9 @@
+{
+  "success": "Thành công",
+  "error": "Có lỗi xảy ra",
+  "notFound": "Không tìm thấy",
+  "unauthorized": "Không có quyền truy cập",
+  "forbidden": "Truy cập bị từ chối",
+  "badRequest": "Yêu cầu không hợp lệ",
+  "internalServerError": "Lỗi máy chủ nội bộ"
+}

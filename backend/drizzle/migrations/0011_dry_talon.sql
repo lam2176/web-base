@@ -1,0 +1,1 @@
+ALTER TABLE "order_status_history" ADD COLUMN "type" varchar(20) DEFAULT 'status' NOT NULL;
