@@ -63,9 +63,20 @@ export default function MobileBannerWithText({
   const slides = bannerSlides.length > 0 ? bannerSlides : productSlides;
   const isUsingProductSlides = bannerSlides.length === 0 && productSlides.length > 0;
 
-  if (!slides || slides.length === 0) return null;
-
   const totalSlides = slides.length;
+
+  // Auto-play (must run before the early return to keep hook order stable)
+  useEffect(() => {
+    if (!isAutoPlaying || totalSlides <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % totalSlides);
+    }, 5000); // 5 giây
+
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, totalSlides]);
+
+  if (totalSlides === 0) return null;
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % totalSlides);
@@ -78,17 +89,6 @@ export default function MobileBannerWithText({
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
   };
-
-  // Auto-play
-  useEffect(() => {
-    if (!isAutoPlaying || totalSlides <= 1) return;
-
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % totalSlides);
-    }, 5000); // 5 giây
-
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, totalSlides]);
 
   // Lấy banner đang hiển thị dựa trên currentIndex
   const currentSlide = slides[currentIndex];
