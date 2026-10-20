@@ -44,3 +44,6 @@ lerna-debug.log*
 # Upload files
 /uploads/*
 !uploads/.gitkeep
+
+# Vercel build output
+/public

@@ -12,7 +12,7 @@ if (!connectionString) {
 }
 
 export const client = postgres(connectionString, {
-  max: 10,
+  max: process.env.VERCEL ? 1 : 10, // One connection per serverless instance
   onnotice: () => {}, // Suppress notices
   prepare: false, // Disable prepared statements
   connection: {

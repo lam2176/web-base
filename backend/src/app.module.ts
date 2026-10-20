@@ -71,7 +71,7 @@ import { RolesGuard } from '@shared/guards/roles.guard';
       fallbackLanguage: 'vi',
       loaderOptions: {
         path: join(__dirname, '/locales/'),
-        watch: true,
+        watch: !process.env.VERCEL,
       },
       resolvers: [
         new HeaderResolver(['language', 'lang']),

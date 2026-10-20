@@ -34,36 +34,43 @@ export class LoggerService {
             }),
           ),
         }),
-        // Daily rotate file transport
-        new DailyRotateFile({
-          dirname: join(process.cwd(), 'logs'),
-          filename: 'app-%DATE%.log',
-          datePattern: 'YYYY-MM-DD',
-          zippedArchive: true,
-          maxSize: '20m',
-          maxFiles: '14d',
-          format: winston.format.combine(
-            winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-            winston.format.printf(({ timestamp, level, message, stack }) => {
-              if (stack) {
-                return `${timestamp} [${level.toUpperCase()}]: ${message}\n${stack}`;
-              }
-              return `${timestamp} [${level.toUpperCase()}]: ${message}`;
-            }),
-          ),
-        }),
-        // Error logs in separate file
-        new DailyRotateFile({
-          level: 'error',
-          dirname: join(process.cwd(), 'logs'),
-          filename: 'error-%DATE%.log',
-          datePattern: 'YYYY-MM-DD',
-          zippedArchive: true,
-          maxSize: '20m',
-          maxFiles: '30d',
-        }),
+        // File transports are skipped on Vercel (read-only filesystem)
+        ...(process.env.VERCEL ? [] : LoggerService.createFileTransports()),
       ],
     });
+  }
+
+  private static createFileTransports(): winston.transport[] {
+    return [
+      // Daily rotate file transport
+      new DailyRotateFile({
+        dirname: join(process.cwd(), 'logs'),
+        filename: 'app-%DATE%.log',
+        datePattern: 'YYYY-MM-DD',
+        zippedArchive: true,
+        maxSize: '20m',
+        maxFiles: '14d',
+        format: winston.format.combine(
+          winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+          winston.format.printf(({ timestamp, level, message, stack }) => {
+            if (stack) {
+              return `${timestamp} [${level.toUpperCase()}]: ${message}\n${stack}`;
+            }
+            return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+          }),
+        ),
+      }),
+      // Error logs in separate file
+      new DailyRotateFile({
+        level: 'error',
+        dirname: join(process.cwd(), 'logs'),
+        filename: 'error-%DATE%.log',
+        datePattern: 'YYYY-MM-DD',
+        zippedArchive: true,
+        maxSize: '20m',
+        maxFiles: '30d',
+      }),
+    ];
   }
 
   log(message: string, context?: string): void {
