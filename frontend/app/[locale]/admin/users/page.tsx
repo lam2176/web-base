@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { User as UserType } from "@/lib/types/api";
+import { getUserErrorMessage } from "./user-form";
 
 export default function AdminUsersPage({
   params: { locale },
@@ -41,8 +42,13 @@ export default function AdminUsersPage({
       },
       onError: (error: unknown) => {
         console.error("Failed to delete user:", error);
+        setDeleteDialogOpen(false);
         alert(
-          locale === "vi" ? "Không thể xóa người dùng" : "Failed to delete user"
+          getUserErrorMessage(
+            error,
+            locale,
+            locale === "vi" ? "Không thể xóa người dùng" : "Failed to delete user"
+          )
         );
       },
     });

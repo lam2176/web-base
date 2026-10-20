@@ -41,6 +41,16 @@ export interface User {
   updatedAt: string;
 }
 
+export interface CreateUserDto {
+  email: string;
+  password: string;
+  role: 'admin' | 'staff';
+}
+
+// Omit password to keep the current one
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface UpdateUserDto extends Partial<CreateUserDto> {}
+
 // Category Image Type
 export interface CategoryImage {
   id: number;

@@ -11,6 +11,7 @@ import {
   CreateDiscountCodeDto,
   CreatePageDto,
   CreateProductDto,
+  CreateUserDto,
   DiscountCode,
   Media,
   Order,
@@ -30,6 +31,7 @@ import {
   UpdateProductDto,
   UpdateStoreInfoDto,
   UpdateMediaDto,
+  UpdateUserDto,
   User,
 } from '@/lib/types/api';
 
@@ -264,6 +266,16 @@ export const adminUserService = {
 
   getById: async (id: number): Promise<User> => {
     const response = await apiClient.get<ApiResponse<User>>(`/admin/users/${id}`);
+    return response.data.data!;
+  },
+
+  create: async (data: CreateUserDto): Promise<User> => {
+    const response = await apiClient.post<ApiResponse<User>>('/admin/users', data);
+    return response.data.data!;
+  },
+
+  update: async (id: number, data: UpdateUserDto): Promise<User> => {
+    const response = await apiClient.put<ApiResponse<User>>(`/admin/users/${id}`, data);
     return response.data.data!;
   },
 

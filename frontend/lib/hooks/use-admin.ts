@@ -30,6 +30,8 @@ import {
   UpdateOrderStatusDto,
   OrderQueryDto,
   UpdateMediaDto,
+  CreateUserDto,
+  UpdateUserDto,
 } from '@/lib/types/api';
 
 // ============ CATEGORIES ============
@@ -453,6 +455,29 @@ export function useAdminUser(id: number) {
     queryKey: ['admin', 'users', id],
     queryFn: () => adminUserService.getById(id),
     enabled: !!id,
+  });
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateUserDto) => adminUserService.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateUserDto }) =>
+      adminUserService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
   });
 }
 
