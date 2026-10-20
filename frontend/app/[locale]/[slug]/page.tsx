@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { pageService } from '@/lib/api/services/page.service';
-import { sanitizeHtml } from '@/lib/utils';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface PageProps {
   params: {

@@ -4,6 +4,10 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // jsdom reads bundled assets from disk at runtime; keep it in node_modules on Vercel
+    serverComponentsExternalPackages: ['isomorphic-dompurify', 'jsdom'],
+  },
   images: {
     remotePatterns: [
       {

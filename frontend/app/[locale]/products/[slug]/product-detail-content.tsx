@@ -8,7 +8,7 @@ import { productService } from "@/lib/api/services/product.service";
 import { Product, ProductVariant } from "@/lib/types/api";
 import { useCartStore } from "@/lib/stores/cart.store";
 import { useCurrency } from "@/lib/hooks/useCurrency";
-import { sanitizeHtml } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
