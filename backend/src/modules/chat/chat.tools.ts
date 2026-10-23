@@ -29,7 +29,7 @@ export const CHAT_TOOL_DECLARATIONS: FunctionDeclaration[] = [
       properties: {
         query: {
           type: 'string',
-          description: '1-2 từ khóa tiếng Việt có dấu hoặc tên thương hiệu, ví dụ "iphone", "tai nghe". Bỏ trống để lấy theo danh mục/giá.',
+          description: '1-2 từ khóa tiếng Việt có dấu, ví dụ "kim ngân", "lan ý", "chậu sứ". Bỏ trống để lấy theo danh mục/giá.',
         },
         categoryId: { type: 'integer', description: 'ID danh mục lấy từ list_categories' },
         minPrice: { type: 'number', description: 'Giá thấp nhất (VND)' },

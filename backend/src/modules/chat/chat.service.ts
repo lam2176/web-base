@@ -207,7 +207,12 @@ export class ChatService {
     }
 
     const reply = text
-      .replace(PRODUCT_MARKER, '')
+      .replace(PRODUCT_MARKER, (marker, slug: string, offset: number) => {
+        // Models sometimes write the marker in place of the name; keep the name readable
+        const product = seenProducts.get(slug.toLowerCase());
+        const before = text.slice(Math.max(0, offset - 120), offset).toLowerCase();
+        return product && !before.includes(product.name.toLowerCase()) ? `**${product.name}**` : '';
+      })
       .replace(/[ \t]+([,.!?])/g, '$1')
       .replace(/[ \t]{2,}/g, ' ')
       .trim();

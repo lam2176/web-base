@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { eq, like, or, and, gte, lte, sql, desc, asc } from 'drizzle-orm';
+import { eq, like, or, and, gte, lte, ne, sql, desc, asc } from 'drizzle-orm';
 import { db } from '@/db';
 import { products, productVariants, productImages, categories, media } from '@/db/schema';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -77,11 +77,16 @@ export class ProductService {
     return this.findById(newProduct.id);
   }
 
-  async findAll(query: ProductQueryDto) {
+  // activeOnly: storefront callers hide inactive (unpublished) products; admin sees everything
+  async findAll(query: ProductQueryDto, { activeOnly = false } = {}) {
     const { page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'desc' } = query;
     const offset = (page - 1) * limit;
 
     let conditions = [];
+
+    if (activeOnly && !query.status) {
+      conditions.push(ne(products.status, 'inactive'));
+    }
 
     // Search filter with PostgreSQL Full-Text Search
     if (search) {

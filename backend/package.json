@@ -22,7 +22,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "ts-node src/db/seed.ts"
+    "db:seed": "ts-node src/db/seed.ts",
+    "db:seed:plants": "ts-node src/db/seed-plants.ts"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",

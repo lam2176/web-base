@@ -330,7 +330,8 @@ export default function AdminMediaPage({ params: { locale } }: { params: { local
 
       {/* Upload Dialog */}
       <AlertDialog open={uploadDialogOpen} onOpenChange={handleCloseUploadDialog}>
-        <AlertDialogContent className="max-w-2xl">
+        {/* Capped height with a scrolling body so the footer buttons stay visible with many files */}
+        <AlertDialogContent className="flex max-h-[90vh] max-w-2xl flex-col">
           <AlertDialogHeader>
             <AlertDialogTitle>
               {locale === 'vi' ? 'Tải lên file' : 'Upload File'}
@@ -342,7 +343,7 @@ export default function AdminMediaPage({ params: { locale } }: { params: { local
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="-mx-6 min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
             <div>
               <Label htmlFor="file-upload">
                 {locale === 'vi' ? 'Chọn file' : 'Select Files'}
@@ -406,7 +407,9 @@ export default function AdminMediaPage({ params: { locale } }: { params: { local
 
             {selectedFiles.length > 0 && (
               <div className="space-y-2">
-                <Label>{locale === 'vi' ? 'File đã chọn' : 'Selected Files'}</Label>
+                <Label>
+                  {locale === 'vi' ? 'File đã chọn' : 'Selected Files'} ({selectedFiles.length})
+                </Label>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                   {selectedFiles.map((selectedFile, index) => {
                     const isImage = selectedFile.file.type.startsWith('image/');

@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  NotFoundException,
   Param,
   Query,
   ParseIntPipe,
@@ -21,7 +22,7 @@ export class ProductController {
   @ApiOperation({ summary: 'Get all products with filters' })
   @ApiResponse({ status: 200, description: 'Return all products' })
   async findAll(@Query() query: ProductQueryDto): Promise<PaginatedResponseDto<any[]>> {
-    const { data, pagination } = await this.productService.findAll(query);
+    const { data, pagination } = await this.productService.findAll(query, { activeOnly: true });
     return new PaginatedResponseDto(data, pagination);
   }
 
@@ -41,7 +42,7 @@ export class ProductController {
   @ApiResponse({ status: 200, description: 'Return product' })
   async findBySlug(@Param('slug') slug: string): Promise<ApiResponseDto<any>> {
     const result = await this.productService.findBySlug(slug);
-    return ApiResponseDto.success(result);
+    return ApiResponseDto.success(this.ensurePublished(result));
   }
 
   @Get(':id')
@@ -49,7 +50,15 @@ export class ProductController {
   @ApiResponse({ status: 200, description: 'Return product' })
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<ApiResponseDto<any>> {
     const result = await this.productService.findById(id);
-    return ApiResponseDto.success(result);
+    return ApiResponseDto.success(this.ensurePublished(result));
+  }
+
+  // Hidden (inactive) products are only visible through the admin API
+  private ensurePublished<T extends { status?: string }>(product: T): T {
+    if (product.status === 'inactive') {
+      throw new NotFoundException('Product not found');
+    }
+    return product;
   }
 
   @Get(':id/related')

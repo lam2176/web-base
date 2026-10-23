@@ -16,7 +16,7 @@ export class ChatMessageDto {
   @IsIn(['user', 'assistant'])
   role: 'user' | 'assistant';
 
-  @ApiProperty({ example: 'Mình cần điện thoại chụp ảnh đẹp tầm 10 triệu' })
+  @ApiProperty({ example: 'Mình cần cây để bàn dễ chăm, dưới 300 nghìn' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(1000)

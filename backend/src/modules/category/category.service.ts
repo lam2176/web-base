@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { eq, like, or, isNull, inArray } from 'drizzle-orm';
+import { and, eq, like, or, isNull, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { categories, categoryImages } from '@/db/schema';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -53,19 +53,26 @@ export class CategoryService {
     return this.findById(newCategory.id);
   }
 
-  async findAll(search?: string) {
+  // activeOnly: storefront callers hide inactive categories; admin sees everything
+  async findAll(search?: string, { activeOnly = false } = {}) {
     const baseCategories = await db.query.categories.findMany({
-      where: search
-        ? or(like(categories.nameVi, `%${search}%`), like(categories.nameEn, `%${search}%`))
-        : undefined,
+      where: and(
+        search
+          ? or(like(categories.nameVi, `%${search}%`), like(categories.nameEn, `%${search}%`))
+          : undefined,
+        activeOnly ? eq(categories.status, 'active') : undefined,
+      ),
     });
 
     return this.attachImages(baseCategories);
   }
 
-  async findRootCategories() {
+  async findRootCategories({ activeOnly = false } = {}) {
     const baseCategories = await db.query.categories.findMany({
-      where: isNull(categories.parentId),
+      where: and(
+        isNull(categories.parentId),
+        activeOnly ? eq(categories.status, 'active') : undefined,
+      ),
     });
     return this.attachImages(baseCategories);
   }

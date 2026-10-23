@@ -21,7 +21,7 @@ export class CategoryController {
   @ApiQuery({ name: 'search', required: false })
   @ApiResponse({ status: 200, description: 'Return all categories' })
   async findAll(@Query('search') search?: string): Promise<ApiResponseDto<any[]>> {
-    const result = await this.categoryService.findAll(search);
+    const result = await this.categoryService.findAll(search, { activeOnly: true });
     return ApiResponseDto.success(result);
   }
 
@@ -29,7 +29,7 @@ export class CategoryController {
   @ApiOperation({ summary: 'Get root categories (no parent)' })
   @ApiResponse({ status: 200, description: 'Return root categories' })
   async findRootCategories(): Promise<ApiResponseDto<any[]>> {
-    const result = await this.categoryService.findRootCategories();
+    const result = await this.categoryService.findRootCategories({ activeOnly: true });
     return ApiResponseDto.success(result);
   }
 

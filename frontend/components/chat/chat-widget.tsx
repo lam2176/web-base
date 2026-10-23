@@ -25,7 +25,7 @@ const TEXT = {
     placeholder: 'Nhập câu hỏi...',
     reset: 'Cuộc trò chuyện mới',
     error: 'Xin lỗi, mình đang gặp sự cố. Bạn thử lại sau nhé.',
-    suggestions: ['Tư vấn điện thoại chụp ảnh đẹp', 'Laptop cho sinh viên', 'Sản phẩm đang giảm giá'],
+    suggestions: ['Cây để bàn dễ chăm', 'Cây phong thủy tặng khai trương', 'Cây chịu bóng cho văn phòng'],
   },
   en: {
     title: 'Shopping assistant',
@@ -34,7 +34,7 @@ const TEXT = {
     placeholder: 'Type a question...',
     reset: 'New conversation',
     error: "Sorry, something went wrong. Please try again later.",
-    suggestions: ['Phone with a great camera', 'Laptop for students', 'Products on sale'],
+    suggestions: ['Easy-care desk plants', 'Feng shui gift plants', 'Low-light office plants'],
   },
 };
 
