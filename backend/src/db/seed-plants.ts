@@ -4,6 +4,7 @@
  * Also hides the original demo tech products/categories (status = inactive).
  *
  * Idempotent: categories/products whose slug already exists are skipped.
+ * Products/categories marked `hidden` are created inactive (e.g. no photo yet).
  * Run: npm run db:seed:plants
  */
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -17,20 +18,12 @@ import { media } from './schema/media.schema';
 dotenv.config();
 
 const postgres = (postgresImport as any).default || postgresImport;
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error('DATABASE_URL is not defined');
-}
-
-const client = postgres(connectionString, { prepare: false, max: 1 });
-const db = drizzle(client);
 
 const OLD_PRODUCT_SLUGS = ['iphone-15-pro-max', 'macbook-pro-14'];
 const OLD_CATEGORY_SLUGS = ['smartphones', 'laptops', 'accessories'];
 
 // Uploaded photos, referenced by original filename prefix (unique per upload)
-const PHOTO = {
+export const PHOTO = {
   billietiaeBronze: 'z7177085798295',
   billietiaeTerrazzo: 'z7177085792715',
   billietiaePedestal: 'z7177085776345',
@@ -47,9 +40,20 @@ const PHOTO = {
   lanY: 'z7236623824663',
   phatTaiNui: 'z7236623818019',
   thietMocLan: 'z7236623830002',
+  luoiHo: 'z7236622567477',
+  trauBaCamThach: 'z7236622698419',
+  cauTieuTram: 'z7181435289805',
+  senDaGio: 'z7181424833391',
+  kimTienNho: 'z7181441872913',
+  kimTienLon: 'z7236622791457',
+  phuQuy: 'z7236623851705',
+  bangSingapore: 'z7236622611029',
+  monstera: 'z7236622678843',
+  chauTruDen: 'z7236622671782',
+  chauTerrazzo: 'z7236622579824',
 };
 
-interface CategorySeed {
+export interface CategorySeed {
   slug: string;
   nameVi: string;
   nameEn: string;
@@ -57,9 +61,10 @@ interface CategorySeed {
   descriptionEn: string;
   order: number;
   photo?: string;
+  hidden?: boolean;
 }
 
-interface ProductSeed {
+export interface ProductSeed {
   slug: string;
   nameVi: string;
   nameEn: string;
@@ -68,13 +73,14 @@ interface ProductSeed {
   salePrice?: number;
   stock: number;
   featured?: boolean;
+  hidden?: boolean;
   photos?: string[];
   descriptionVi: string;
   descriptionEn: string;
   variants?: { name: string; value: string; priceAdjustment: number; stock: number }[];
 }
 
-const CATEGORIES: CategorySeed[] = [
+export const CATEGORIES: CategorySeed[] = [
   {
     slug: 'cay-de-ban',
     nameVi: 'Cây để bàn',
@@ -118,6 +124,7 @@ const CATEGORIES: CategorySeed[] = [
     descriptionVi: 'Đất trồng, phân bón, đế lót và dụng cụ chăm cây.',
     descriptionEn: 'Potting soil, fertiliser, plant caddies and care tools.',
     order: 5,
+    hidden: true, // all its products are hidden until photos are available
   },
 ];
 
@@ -134,7 +141,7 @@ function desc(intro: string, info: string[], care: string[], meaning?: string): 
 
 const PET_WARNING = 'Nhựa cây có thể gây kích ứng, tránh để trẻ nhỏ và thú cưng nhai lá.';
 
-const PRODUCTS: ProductSeed[] = [
+export const PRODUCTS: ProductSeed[] = [
   // ---- Large indoor plants (with photos)
   {
     slug: 'philodendron-billietiae-chau-van-may-dong',
@@ -384,35 +391,37 @@ const PRODUCTS: ProductSeed[] = [
     ),
     descriptionEn: 'Ruby Red Spikemoss (Selaginella), a moss-like mini plant with ruby-red tips. Loves humidity; great for terrariums.',
   },
-  // ---- Tabletop plants (no photo yet)
+  // ---- Tabletop plants
   {
     slug: 'luoi-ho-xanh-chau-su',
-    nameVi: 'Lưỡi Hổ xanh chậu sứ',
-    nameEn: 'Snake Plant in ceramic pot',
+    nameVi: 'Lưỡi Hổ viền vàng chậu đen chân sắt',
+    nameEn: 'Snake Plant Laurentii in black pot with metal stand',
     category: 'cay-de-ban',
-    originalPrice: 250000,
-    stock: 35,
+    originalPrice: 490000,
+    stock: 15,
+    photos: [PHOTO.luoiHo],
     descriptionVi: desc(
-      'Lưỡi Hổ (Sansevieria) lá thẳng đứng cứng cáp, cực kỳ dễ sống, phù hợp cả người mới trồng cây.',
-      ['Chiều cao tổng: khoảng 40 - 50 cm', 'Chậu sứ trắng'],
+      'Lưỡi Hổ viền vàng (Sansevieria Laurentii) lá thẳng đứng, viền vàng nổi bật, trồng trong chậu gốm đen đặt trên chân sắt. Cực kỳ dễ sống, hợp cả người mới trồng cây.',
+      ['Chiều cao tổng (cả chân sắt): khoảng 70 - 80 cm', 'Chậu gốm đen dáng tròn kèm chân sắt 3 chân', 'Phù hợp: phòng khách, kệ tivi, góc làm việc'],
       ['Chịu bóng tốt, sống được trong phòng máy lạnh', 'Tưới 2-3 tuần/lần, rất chịu hạn', 'Tránh úng nước', PET_WARNING],
       'Lưỡi Hổ tượng trưng cho sự mạnh mẽ, giúp xua đuổi điều xấu.',
     ),
-    descriptionEn: 'Snake plant (Sansevieria) in a white ceramic pot. Extremely easy care, drought tolerant.',
+    descriptionEn: 'Snake plant Laurentii (yellow-edged) in a black ceramic pot on a metal stand. Total height about 70-80 cm. Extremely easy care.',
   },
   {
     slug: 'trau-ba-vang-chau-treo',
-    nameVi: 'Trầu Bà Vàng chậu treo',
-    nameEn: 'Golden Pothos hanging pot',
+    nameVi: 'Trầu Bà Cẩm Thạch chậu gốm mặt người',
+    nameEn: 'Marble Queen Pothos in face ceramic pot',
     category: 'cay-de-ban',
-    originalPrice: 180000,
-    stock: 28,
+    originalPrice: 280000,
+    stock: 18,
+    photos: [PHOTO.trauBaCamThach],
     descriptionVi: desc(
-      'Trầu Bà Vàng (Epipremnum aureum) lá xanh loang vàng, thân rủ mềm mại, có thể đặt kệ cao hoặc treo.',
-      ['Chiều dài dây rủ: khoảng 40 - 60 cm', 'Chậu nhựa treo kèm móc'],
-      ['Ánh sáng tán xạ, chịu bóng tốt', 'Tưới 2 lần/tuần; có thể cắt cành cắm nước', PET_WARNING],
+      'Trầu Bà Cẩm Thạch (Epipremnum Marble Queen) lá loang trắng xanh như vân đá, dây rủ mềm mại, trồng trong chậu gốm đen tạo hình mặt người độc đáo.',
+      ['Chiều cao tổng: khoảng 35 - 40 cm, dây rủ khoảng 30 cm', 'Chậu gốm đen tạo hình mặt người', 'Phù hợp: bàn trà, kệ sách, bàn làm việc'],
+      ['Ánh sáng tán xạ; cần sáng hơn trầu bà xanh để giữ vân trắng', 'Tưới 2 lần/tuần khi đất mặt khô', PET_WARNING],
     ),
-    descriptionEn: 'Golden pothos in a hanging pot. Trailing, easy care, tolerates low light.',
+    descriptionEn: 'Marble Queen pothos with white-green marbled leaves in a black face-shaped ceramic pot. About 35-40 cm.',
   },
   {
     slug: 'cau-tieu-tram-de-ban',
@@ -421,12 +430,13 @@ const PRODUCTS: ProductSeed[] = [
     category: 'cay-de-ban',
     originalPrice: 160000,
     stock: 22,
+    photos: [PHOTO.cauTieuTram],
     descriptionVi: desc(
       'Cau Tiểu Trâm (Chamaedorea elegans) dáng cọ nhỏ xinh, lá xanh mảnh, giúp không gian làm việc tươi mát.',
-      ['Chiều cao tổng: khoảng 35 - 45 cm', 'Chậu sứ trắng mini'],
+      ['Chiều cao tổng: khoảng 35 - 45 cm', 'Chậu sứ vàng dáng trụ, kèm tượng trang trí mini'],
       ['Chịu bóng tốt', 'Giữ đất hơi ẩm, tưới 2 lần/tuần', 'An toàn cho thú cưng'],
     ),
-    descriptionEn: 'Parlor palm (Chamaedorea elegans) in a small white pot. Shade tolerant, pet safe.',
+    descriptionEn: 'Parlor palm (Chamaedorea elegans) in a small yellow ceramic pot. Shade tolerant, pet safe.',
   },
   {
     slug: 'ngoc-ngan-de-ban',
@@ -435,6 +445,7 @@ const PRODUCTS: ProductSeed[] = [
     category: 'cay-de-ban',
     originalPrice: 220000,
     stock: 18,
+    hidden: true, // no photo yet
     descriptionVi: desc(
       'Ngọc Ngân (Aglaonema) lá loang trắng xanh thanh nhã, chịu bóng tốt, thích hợp phòng máy lạnh.',
       ['Chiều cao tổng: khoảng 30 - 40 cm', 'Chậu sứ trắng'],
@@ -445,37 +456,39 @@ const PRODUCTS: ProductSeed[] = [
   },
   {
     slug: 'sen-da-mix-khay-go',
-    nameVi: 'Set sen đá mix khay gỗ',
-    nameEn: 'Mixed succulent set in wooden tray',
+    nameVi: 'Tiểu cảnh sen đá & xương rồng chậu giỏ gốm',
+    nameEn: 'Succulent & cactus arrangement in ceramic basket',
     category: 'cay-de-ban',
     originalPrice: 199000,
     salePrice: 169000,
     stock: 15,
+    photos: [PHOTO.senDaGio],
     descriptionVi: desc(
-      'Set 4-5 cây sen đá nhiều màu trồng chung khay gỗ, nhỏ gọn, làm quà tặng rất xinh.',
-      ['Kích thước khay: khoảng 25 x 12 cm', 'Gồm 4-5 cây sen đá các loại'],
-      ['Cần nhiều nắng, đặt cạnh cửa sổ hướng sáng', 'Tưới 1 lần/tuần, để đất khô hẳn giữa các lần tưới'],
+      'Tiểu cảnh mini gồm sen đá, xương rồng và cỏ ngọc trồng chung trong chậu gốm hình giỏ, trang trí hoa sứ. Nhỏ gọn, làm quà tặng rất xinh.',
+      ['Đường kính chậu: khoảng 15 cm', 'Gồm sen đá, xương rồng, cỏ ngọc (Haworthia) và hoa sứ trang trí'],
+      ['Cần nhiều nắng, đặt cạnh cửa sổ hướng sáng', 'Tưới 1 lần/tuần, ít nước, để đất khô hẳn giữa các lần tưới'],
     ),
-    descriptionEn: 'Set of 4-5 mixed succulents in a wooden tray. Needs bright light and little water.',
+    descriptionEn: 'Mini arrangement of succulents, cacti and haworthia in a ceramic basket pot with ceramic flowers. About 15 cm.',
   },
-  // ---- Feng shui (no photo yet)
+  // ---- Feng shui
   {
     slug: 'kim-tien-chau-su-trang',
-    nameVi: 'Kim Tiền chậu sứ trắng',
-    nameEn: 'ZZ Plant in white ceramic pot',
+    nameVi: 'Kim Tiền (để bàn & cỡ lớn)',
+    nameEn: 'ZZ Plant (tabletop & large)',
     category: 'cay-phong-thuy',
     originalPrice: 450000,
     stock: 20,
+    photos: [PHOTO.kimTienNho, PHOTO.kimTienLon],
     descriptionVi: desc(
-      'Kim Tiền (Zamioculcas) lá xanh bóng mọng nước, rất chịu bóng và chịu hạn, hợp với văn phòng ít nắng.',
-      ['Cỡ nhỏ cao khoảng 50 cm, cỡ lớn cao khoảng 80 cm', 'Chậu sứ trắng'],
+      'Kim Tiền (Zamioculcas) lá xanh bóng mọng nước, rất chịu bóng và chịu hạn, hợp với văn phòng ít nắng. Có 2 cỡ: để bàn và đặt sàn.',
+      ['Cỡ để bàn: cao khoảng 40 cm, chậu sứ trắng họa tiết cây', 'Cỡ lớn: cao khoảng 1 m, chậu composite trụ đen sọc'],
       ['Chịu bóng tốt', 'Tưới khoảng 2 tuần/lần, rất chịu hạn', 'Tránh úng vì củ dễ thối', PET_WARNING],
       'Kim Tiền mang ý nghĩa tiền vào như nước, là quà khai trương phổ biến.',
     ),
-    descriptionEn: 'ZZ plant (Zamioculcas) in a white ceramic pot, small or large. Very shade and drought tolerant.',
+    descriptionEn: 'ZZ plant (Zamioculcas): tabletop size (~40 cm, white ceramic pot) or large (~1 m, tall black ribbed planter). Very shade and drought tolerant.',
     variants: [
-      { name: 'Kích thước', value: 'Nhỏ (~50 cm)', priceAdjustment: 0, stock: 12 },
-      { name: 'Kích thước', value: 'Lớn (~80 cm)', priceAdjustment: 300000, stock: 8 },
+      { name: 'Kích thước', value: 'Để bàn (~40 cm, chậu sứ trắng)', priceAdjustment: 0, stock: 12 },
+      { name: 'Kích thước', value: 'Cỡ lớn (~1 m, chậu trụ đen)', priceAdjustment: 1050000, stock: 8 },
     ],
   },
   {
@@ -485,15 +498,16 @@ const PRODUCTS: ProductSeed[] = [
     category: 'cay-phong-thuy',
     originalPrice: 260000,
     stock: 16,
+    photos: [PHOTO.phuQuy],
     descriptionVi: desc(
       'Phú Quý (Aglaonema đỏ) lá xanh viền hồng đỏ rực rỡ, hợp làm quà tặng dịp lễ Tết.',
-      ['Chiều cao tổng: khoảng 35 - 45 cm', 'Chậu sứ trắng'],
+      ['Chiều cao tổng: khoảng 35 - 45 cm', 'Chậu sứ trắng dáng tròn vân nổi'],
       ['Ánh sáng tán xạ giúp lá lên màu đẹp', 'Tưới 1-2 lần/tuần', PET_WARNING],
       'Phú Quý tượng trưng cho giàu sang, phú quý.',
     ),
-    descriptionEn: 'Red Aglaonema with pink-red edged leaves in a white ceramic pot.',
+    descriptionEn: 'Red Aglaonema with pink-red edged leaves in a round textured white ceramic pot.',
   },
-  // ---- Large indoor (no photo yet)
+  // ---- Large indoor
   {
     slug: 'bang-singapore-1m2',
     nameVi: 'Bàng Singapore 1,2 m',
@@ -501,6 +515,7 @@ const PRODUCTS: ProductSeed[] = [
     category: 'cay-noi-that-co-lon',
     originalPrice: 1200000,
     stock: 0,
+    photos: [PHOTO.bangSingapore],
     descriptionVi: desc(
       'Bàng Singapore (Ficus lyrata) lá to hình đàn violin, dáng cây sang trọng, rất được ưa chuộng trong nội thất hiện đại.',
       ['Chiều cao tổng: khoảng 1,2 m', 'Chậu composite trắng'],
@@ -516,12 +531,13 @@ const PRODUCTS: ProductSeed[] = [
     originalPrice: 1450000,
     salePrice: 1290000,
     stock: 6,
+    photos: [PHOTO.monstera],
     descriptionVi: desc(
-      'Monstera Deliciosa (Trầu bà Nam Mỹ) lá xẻ đặc trưng, mang phong cách nhiệt đới cho phòng khách.',
-      ['Chiều cao tổng: khoảng 1 m', 'Chậu xi măng giả đá'],
+      'Monstera Deliciosa (Trầu bà Nam Mỹ) lá xẻ đặc trưng, mang phong cách nhiệt đới cho phòng khách, sảnh.',
+      ['Chiều cao tổng: khoảng 1 m', 'Chậu xi măng giả đá màu trắng xám'],
       ['Ánh sáng tán xạ', 'Tưới 1-2 lần/tuần', 'Có thể cắm cọc dừa để cây leo thẳng', PET_WARNING],
     ),
-    descriptionEn: 'Monstera Deliciosa with split leaves, about 1 m tall, in a concrete planter.',
+    descriptionEn: 'Monstera Deliciosa with split leaves, about 1 m tall, in a white-grey concrete planter.',
   },
   // ---- Planters
   {
@@ -531,6 +547,7 @@ const PRODUCTS: ProductSeed[] = [
     category: 'chau-cay',
     originalPrice: 120000,
     stock: 60,
+    hidden: true, // no photo yet
     descriptionVi: desc(
       'Chậu sứ trắng men bóng dáng tròn, có lỗ thoát nước, hợp với hầu hết cây để bàn.',
       ['Chất liệu: sứ men bóng', 'Có lỗ thoát nước và đĩa lót'],
@@ -550,12 +567,13 @@ const PRODUCTS: ProductSeed[] = [
     category: 'chau-cay',
     originalPrice: 850000,
     stock: 14,
+    photos: [PHOTO.chauTruDen],
     descriptionVi: desc(
-      'Chậu composite trụ cao màu đen nhám, nhẹ, bền, chống nứt, phù hợp cây nội thất cỡ lớn như Lan ý, Phát tài.',
-      ['Chất liệu: composite sợi thủy tinh', 'Đường kính miệng khoảng 35 cm'],
+      'Chậu composite trụ cao màu đen nhám, nhẹ, bền, chống nứt, phù hợp cây nội thất cỡ lớn như Kim Tiền, Lan ý, Phát tài.',
+      ['Chất liệu: composite sợi thủy tinh', 'Đường kính miệng khoảng 35 cm', 'Ảnh minh họa chậu đã trồng Kim Tiền; giá chỉ tính chậu'],
       ['Dùng được trong nhà và ngoài trời', 'Nên dùng kèm đế bánh xe để dễ di chuyển'],
     ),
-    descriptionEn: 'Tall matte black fibreglass composite planter for large indoor plants. 60 cm or 80 cm tall.',
+    descriptionEn: 'Tall matte black fibreglass composite planter for large indoor plants, 60 cm or 80 cm tall. Photo shows it planted with a ZZ plant; price is for the planter only.',
     variants: [
       { name: 'Chiều cao', value: '60 cm', priceAdjustment: 0, stock: 8 },
       { name: 'Chiều cao', value: '80 cm', priceAdjustment: 350000, stock: 6 },
@@ -568,14 +586,15 @@ const PRODUCTS: ProductSeed[] = [
     category: 'chau-cay',
     originalPrice: 690000,
     stock: 10,
+    photos: [PHOTO.chauTerrazzo],
     descriptionVi: desc(
       'Chậu terrazzo đá mài vân trắng, dáng trụ thon hiện đại, tạo điểm nhấn tươi sáng cho cây xanh.',
-      ['Chất liệu: terrazzo (đá mài)', 'Cao khoảng 55 cm, đường kính miệng khoảng 32 cm'],
+      ['Chất liệu: terrazzo (đá mài)', 'Cao khoảng 55 cm, đường kính miệng khoảng 32 cm', 'Ảnh minh họa chậu đã trồng Hồng môn; giá chỉ tính chậu'],
       ['Lau bằng khăn ẩm, tránh hóa chất tẩy mạnh'],
     ),
-    descriptionEn: 'Tapered white terrazzo planter, about 55 cm tall.',
+    descriptionEn: 'Tapered white terrazzo planter, about 55 cm tall. Photo shows it planted with anthuriums; price is for the planter only.',
   },
-  // ---- Accessories & supplies
+  // ---- Accessories & supplies (hidden until photos are available)
   {
     slug: 'dat-trong-cay-noi-that-5l',
     nameVi: 'Đất trồng cây nội thất 5 lít',
@@ -583,6 +602,7 @@ const PRODUCTS: ProductSeed[] = [
     category: 'phu-kien-vat-tu',
     originalPrice: 65000,
     stock: 80,
+    hidden: true,
     descriptionVi: desc(
       'Giá thể trộn sẵn gồm xơ dừa, đá perlite, phân trùn quế, tơi xốp và thoát nước tốt cho cây nội thất.',
       ['Dung tích: 5 lít', 'Thành phần: xơ dừa, perlite, phân trùn quế, trấu hun'],
@@ -597,6 +617,7 @@ const PRODUCTS: ProductSeed[] = [
     category: 'phu-kien-vat-tu',
     originalPrice: 85000,
     stock: 50,
+    hidden: true,
     descriptionVi: desc(
       'Phân bón tan chậm dạng viên, nhả dinh dưỡng đều trong 2-3 tháng, tiện cho người bận rộn.',
       ['Khối lượng: 100 g', 'Dạng viên tan chậm'],
@@ -611,6 +632,7 @@ const PRODUCTS: ProductSeed[] = [
     category: 'phu-kien-vat-tu',
     originalPrice: 150000,
     stock: 40,
+    hidden: true,
     descriptionVi: desc(
       'Đế lót chậu bằng nhựa cứng có 4 bánh xe xoay, giúp di chuyển cây lớn dễ dàng và bảo vệ sàn nhà.',
       ['Đường kính: 30 cm', 'Tải trọng tối đa khoảng 80 kg'],
@@ -625,6 +647,7 @@ const PRODUCTS: ProductSeed[] = [
     category: 'phu-kien-vat-tu',
     originalPrice: 45000,
     stock: 70,
+    hidden: true,
     descriptionVi: desc(
       'Bình xịt phun sương mịn 500 ml, dùng tăng độ ẩm cho các loại cây ưa ẩm như Calathea, Quyển bá.',
       ['Dung tích: 500 ml', 'Đầu phun sương mịn chỉnh được'],
@@ -634,7 +657,20 @@ const PRODUCTS: ProductSeed[] = [
   },
 ];
 
-async function findPhotoIds(prefixes: string[]): Promise<Map<string, number>> {
+export type SeedDb = ReturnType<typeof drizzle>;
+
+export function productStatus(product: ProductSeed): 'active' | 'inactive' | 'out_of_stock' {
+  if (product.hidden) return 'inactive';
+  return product.stock === 0 ? 'out_of_stock' : 'active';
+}
+
+export function discountOf(product: ProductSeed): number {
+  return product.salePrice
+    ? Math.round(((product.originalPrice - product.salePrice) / product.originalPrice) * 100)
+    : 0;
+}
+
+export async function findPhotoIds(db: SeedDb, prefixes: string[]): Promise<Map<string, number>> {
   const rows = await db.select({ id: media.id, filename: media.filename }).from(media);
   const ids = new Map<string, number>();
   for (const prefix of prefixes) {
@@ -645,10 +681,10 @@ async function findPhotoIds(prefixes: string[]): Promise<Map<string, number>> {
   return ids;
 }
 
-async function seedPlants() {
+async function seedPlants(db: SeedDb) {
   console.log('🌿 Seeding plant catalogue...');
 
-  const photoIds = await findPhotoIds([
+  const photoIds = await findPhotoIds(db, [
     ...new Set([
       ...CATEGORIES.flatMap((c) => (c.photo ? [c.photo] : [])),
       ...PRODUCTS.flatMap((p) => p.photos ?? []),
@@ -687,7 +723,7 @@ async function seedPlants() {
           descriptionVi: category.descriptionVi,
           descriptionEn: category.descriptionEn,
           order: category.order,
-          status: 'active',
+          status: category.hidden ? 'inactive' : 'active',
         })
         .returning({ id: categories.id });
       categoryIds.set(category.slug, created.id);
@@ -707,10 +743,6 @@ async function seedPlants() {
         .where(eq(products.slug, product.slug));
       if (existing) continue;
 
-      const discount = product.salePrice
-        ? Math.round(((product.originalPrice - product.salePrice) / product.originalPrice) * 100)
-        : 0;
-
       const [created] = await tx
         .insert(products)
         .values({
@@ -721,12 +753,12 @@ async function seedPlants() {
           descriptionEn: product.descriptionEn,
           originalPrice: product.originalPrice.toString(),
           salePrice: product.salePrice?.toString() ?? null,
-          discountPercentage: discount,
+          discountPercentage: discountOf(product),
           stockQuantity: product.stock,
           isOutOfStock: product.stock === 0,
           categoryId: categoryIds.get(product.category),
           featured: product.featured ?? false,
-          status: product.stock === 0 ? 'out_of_stock' : 'active',
+          status: productStatus(product),
           metaTitle: product.nameVi,
           metaDescription: product.descriptionEn,
         })
@@ -759,9 +791,18 @@ async function seedPlants() {
   console.log('🌿 Done');
 }
 
-seedPlants()
-  .catch((error) => {
-    console.error('❌ Seed failed:', error);
-    process.exitCode = 1;
-  })
-  .finally(() => client.end());
+// Only seed when run directly; other scripts may import the catalogue data above
+if (require.main === module) {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is not defined');
+  }
+  const client = postgres(connectionString, { prepare: false, max: 1 });
+
+  seedPlants(drizzle(client))
+    .catch((error) => {
+      console.error('❌ Seed failed:', error);
+      process.exitCode = 1;
+    })
+    .finally(() => client.end());
+}
