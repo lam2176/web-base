@@ -45,13 +45,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
         errorDetails = exceptionResponse.error || null;
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
+      // Unexpected errors (e.g. "Failed query: <SQL>") would leak internals; hide them in production
+      message = this.isProduction ? 'Internal server error' : exception.message;
       // Only expose stack trace in development
       errorDetails = this.isProduction ? null : exception.stack || null;
     }
 
+    // Drizzle wraps the real database error in `cause` (e.g. pooler or connection errors)
+    const cause = exception instanceof Error ? (exception as Error & { cause?: unknown }).cause : undefined;
+    const causeText = cause instanceof Error ? ` | cause: ${cause.message}` : '';
     this.logger.error(
-      `${request.method} ${request.url} - ${status} - ${message}`,
+      `${request.method} ${request.url} - ${status} - ${exception instanceof Error ? exception.message : message}${causeText}`,
       exception instanceof Error ? exception.stack : undefined,
     );
 
