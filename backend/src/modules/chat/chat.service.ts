@@ -13,6 +13,7 @@ import {
   FunctionCallingConfigMode,
   GoogleGenAI,
   Part,
+  ThinkingLevel,
 } from '@google/genai';
 import { CHAT_SYSTEM_PROMPT, PRODUCT_MARKER } from './chat.prompt';
 import { CHAT_TOOL_DECLARATIONS, ChatProductCard, ChatToolsService } from './chat.tools';
@@ -24,9 +25,13 @@ import { ChatMessageDto } from './dto/chat-request.dto';
 const DEFAULT_MODELS = ['gemini-3.6-flash', 'gemini-3-flash-preview', 'gemini-3.5-flash-lite'];
 // Model calls per question; the last one is forced to answer without tools
 const MAX_ROUNDS = 4;
-const REQUEST_TIMEOUT_MS = 15000;
-// Stop trying further models before the 60s serverless limit
-const OVERALL_DEADLINE_MS = 45000;
+// Time budget for one question, kept under the 60s serverless function limit
+const DEADLINE_MS = 50000;
+const MAX_CALL_MS = 20000;
+// With less time than this left, stop calling tools and answer with what we have
+const FORCE_ANSWER_BELOW_MS = 20000;
+// Not worth starting another model with less time than this left
+const MIN_MODEL_START_MS = 12000;
 const FORCE_ANSWER_NOTE =
   '(Hệ thống: đã hết lượt tra cứu. Không gọi thêm công cụ. Hãy trả lời khách ngay bằng thông tin đã có ở trên.)';
 
@@ -57,9 +62,7 @@ export class ChatService {
     private readonly chatTools: ChatToolsService,
   ) {
     const apiKey = configService.get<string>('GEMINI_API_KEY');
-    this.ai = apiKey
-      ? new GoogleGenAI({ apiKey, httpOptions: { timeout: REQUEST_TIMEOUT_MS } })
-      : null;
+    this.ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
     const configured = (configService.get<string>('GEMINI_MODEL') || '')
       .split(',')
@@ -73,13 +76,13 @@ export class ChatService {
       throw new ServiceUnavailableException('Chatbot chưa được cấu hình (thiếu GEMINI_API_KEY)');
     }
 
-    const startedAt = Date.now();
+    const deadline = Date.now() + DEADLINE_MS;
     let quotaExceeded = false;
 
     for (const model of this.models) {
-      if (Date.now() - startedAt > OVERALL_DEADLINE_MS) break;
+      if (deadline - Date.now() < MIN_MODEL_START_MS) break;
       try {
-        return await this.converse(model, messages);
+        return await this.converse(model, messages, deadline);
       } catch (error) {
         if (!(error instanceof ModelCallError)) throw error;
         this.logger.warn(`Model ${model} failed (${error.status ?? 'no status'}): ${error.message}`);
@@ -98,7 +101,11 @@ export class ChatService {
 
   // Runs the whole tool loop on one model. Restarting from scratch on fallback avoids
   // replaying one model's thought signatures to another.
-  private async converse(model: string, messages: ChatMessageDto[]): Promise<ChatReply> {
+  private async converse(
+    model: string,
+    messages: ChatMessageDto[],
+    deadline: number,
+  ): Promise<ChatReply> {
     const contents: Content[] = messages.map((message) => ({
       role: message.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: message.content }],
@@ -106,8 +113,15 @@ export class ChatService {
     const seenProducts = new Map<string, ChatProductCard>();
 
     for (let round = 0; round < MAX_ROUNDS; round++) {
-      const isLastRound = round === MAX_ROUNDS - 1;
-      const response = await this.generate(model, contents, isLastRound);
+      const remaining = deadline - Date.now();
+      // Answer early when time is short, but only once the tools have returned something
+      const isLastRound =
+        round === MAX_ROUNDS - 1 || (round > 0 && remaining < FORCE_ANSWER_BELOW_MS);
+      const timeout = Math.min(MAX_CALL_MS, remaining - 1000);
+      if (timeout <= 0) {
+        throw new ModelCallError(model, undefined, 'Out of time');
+      }
+      const response = await this.generate(model, contents, isLastRound, timeout);
       const candidate = response.candidates?.[0];
 
       if (candidate?.finishReason === FinishReason.SAFETY) {
@@ -142,7 +156,12 @@ export class ChatService {
     };
   }
 
-  private async generate(model: string, contents: Content[], forceAnswer: boolean) {
+  private async generate(
+    model: string,
+    contents: Content[],
+    forceAnswer: boolean,
+    timeoutMs: number,
+  ) {
     // Out of rounds: answer from what the tools already returned. Some models ignore
     // mode NONE, so also tell them explicitly in the last (function response) turn.
     const request = forceAnswer
@@ -160,6 +179,9 @@ export class ChatService {
         model,
         contents: request,
         config: {
+          httpOptions: { timeout: timeoutMs },
+          // Product lookup needs little reasoning; low thinking cuts latency a lot
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           systemInstruction: CHAT_SYSTEM_PROMPT,
           tools: [{ functionDeclarations: CHAT_TOOL_DECLARATIONS }],
           toolConfig: forceAnswer
