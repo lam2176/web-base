@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { FunctionDeclaration } from '@google/genai';
 import { ProductService } from '../product/product.service';
 import { CategoryService } from '../category/category.service';
@@ -71,6 +71,8 @@ const SEARCH_LIMIT = 8;
 
 @Injectable()
 export class ChatToolsService {
+  private readonly logger = new Logger(ChatToolsService.name);
+
   constructor(
     private readonly productService: ProductService,
     private readonly categoryService: CategoryService,
@@ -95,7 +97,9 @@ export class ChatToolsService {
       if (error instanceof NotFoundException) {
         return { result: { error: 'Không tìm thấy' }, products: [] };
       }
-      throw error;
+      // A transient DB failure shouldn't fail the whole reply; let the model work around it
+      this.logger.error(`Tool ${name} failed: ${(error as Error)?.message}`, (error as Error)?.stack);
+      return { result: { error: 'Tạm thời không tra cứu được, hãy thử lại hoặc dùng công cụ khác' }, products: [] };
     }
   }
 
