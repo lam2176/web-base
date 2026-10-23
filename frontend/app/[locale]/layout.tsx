@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Toaster } from "@/components/ui/toaster";
+import ChatWidget from "@/components/chat/chat-widget";
 import { QueryProvider } from "@/providers/query-provider";
 import { storeService } from "@/lib/api/services/store.service";
 import "../globals.css";
@@ -100,6 +101,7 @@ export default async function RootLayout({
         <QueryProvider>
           <NextIntlClientProvider messages={messages}>
             {children}
+            <ChatWidget />
             <Toaster />
           </NextIntlClientProvider>
         </QueryProvider>

@@ -1,6 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
@@ -13,6 +14,9 @@ import { LoggingInterceptor } from '@shared/interceptors/logging.interceptor';
  * and the Vercel serverless handler (serverless.ts)
  */
 export function setupApp(app: INestApplication): void {
+  // Behind Vercel's proxy: use X-Forwarded-For so rate limits apply per client, not per proxy
+  (app as NestExpressApplication).set('trust proxy', 1);
+
   // Request body size limits - prevents DoS attacks via large payloads
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));

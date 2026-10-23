@@ -36,6 +36,7 @@ import { CustomerAuthModule } from './modules/customer-auth/customer-auth.module
 import { CustomerAddressModule } from './modules/customer-address/customer-address.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { MenuModule } from './modules/menu/menu.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 // Guards
 import { JwtAuthGuard } from '@shared/guards/jwt-auth.guard';
@@ -101,6 +102,7 @@ import { RolesGuard } from '@shared/guards/roles.guard';
     CustomerAddressModule,
     CustomerModule,
     MenuModule,
+    ChatModule,
   ],
   providers: [
     // Note: Guards are applied at controller/route level to ensure proper execution order
