@@ -23,6 +23,12 @@ export class UpdateOrderItemDto {
   @IsString()
   variantName?: string;
 
+  // Sent by the admin order editor; the stored item keeps only the variant name
+  @ApiPropertyOptional({ description: 'Variant ID (informational)' })
+  @IsOptional()
+  @IsNumber()
+  variantId?: number;
+
   @ApiPropertyOptional({ description: 'Quantity', minimum: 1 })
   @IsOptional()
   @IsNumber()

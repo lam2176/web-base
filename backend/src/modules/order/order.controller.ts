@@ -7,8 +7,10 @@ import {
   Req,
   UseGuards,
   Logger,
+  HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Request } from 'express';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -64,5 +66,19 @@ export class OrderController {
   async findByOrderNumber(@Param('orderNumber') orderNumber: string): Promise<ApiResponseDto<any>> {
     const result = await this.orderService.findByOrderNumber(orderNumber);
     return ApiResponseDto.success(result, 'Order retrieved successfully');
+  }
+
+  @Post('number/:orderNumber/simulate-payment')
+  @HttpCode(200)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Simulate a QR bank-transfer payment (demo)',
+    description: 'Marks an unpaid order as paid. Disabled when PAYMENT_SIMULATION=false.',
+  })
+  @ApiResponse({ status: 200, description: 'Order is paid' })
+  async simulatePayment(@Param('orderNumber') orderNumber: string): Promise<ApiResponseDto<any>> {
+    const result = await this.orderService.simulatePayment(orderNumber);
+    return ApiResponseDto.success(result, 'Payment completed');
   }
 }

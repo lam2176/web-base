@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { CustomerAuthModal } from "@/components/customer/customer-auth-modal";
+import { QrPaymentCard } from "@/components/checkout/qr-payment-card";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -173,6 +174,11 @@ export default function CheckoutSuccessPage() {
               </p>
             </CardContent>
           </Card>
+
+          {/* Demo QR payment: per-order QR, auto-confirms after a countdown */}
+          {order.status !== "cancelled" && (
+            <QrPaymentCard order={order} locale={locale} onPaid={setOrder} />
+          )}
 
           {/* Bank Transfer Information - Only show if bank info is complete OR QR image exists */}
           {((storeInfo?.bankName &&

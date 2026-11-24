@@ -237,7 +237,11 @@ export default function AdminOrderDetail({ params: { locale } }: { params: { loc
       fetchOrderDetail();
     } catch (error) {
       console.error('Failed to update order:', error);
-      alert(locale === 'vi' ? 'Không thể cập nhật đơn hàng' : 'Failed to update order');
+      const reason = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      alert(
+        (locale === 'vi' ? 'Không thể cập nhật đơn hàng' : 'Failed to update order') +
+          (reason ? `: ${reason}` : '')
+      );
     } finally {
       setSaving(false);
     }

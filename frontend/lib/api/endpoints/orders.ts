@@ -37,6 +37,14 @@ export const getOrderByNumber = async (orderNumber: string): Promise<Order> => {
   return response.data.data;
 };
 
+// Demo QR payment: marks the order as paid (backend can disable it with PAYMENT_SIMULATION=false)
+export const simulateOrderPayment = async (orderNumber: string): Promise<Order> => {
+  const response = await axiosInstance.post<{ data: Order }>(
+    `/orders/number/${encodeURIComponent(orderNumber)}/simulate-payment`
+  );
+  return response.data.data;
+};
+
 // Cancel order
 export const cancelOrder = async (orderId: string, reason?: string): Promise<Order> => {
   const response = await axiosInstance.post<Order>(`/orders/${orderId}/cancel`, {

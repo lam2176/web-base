@@ -366,6 +366,47 @@ export class OrderService {
   /**
    * Find order by order number with order items
    */
+  /**
+   * Demo QR payment: marks an unpaid order as paid, as a bank callback would.
+   * Disabled with PAYMENT_SIMULATION=false (no real money moves through this path).
+   */
+  async simulatePayment(orderNumber: string) {
+    if (process.env.PAYMENT_SIMULATION === 'false') {
+      throw new BadRequestException('Payment simulation is disabled');
+    }
+
+    const order = await db.query.orders.findFirst({
+      where: eq(orders.orderNumber, orderNumber),
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    if (order.status === 'cancelled') {
+      throw new BadRequestException('Cancelled orders cannot be paid');
+    }
+
+    // Idempotent: scanning the QR twice or the auto-pay timer racing a manual confirm is fine
+    if (order.paymentStatus !== 'paid') {
+      await db.transaction(async (tx) => {
+        await tx
+          .update(orders)
+          .set({ paymentStatus: 'paid', updatedAt: new Date() })
+          .where(eq(orders.id, order.id));
+        await tx.insert(orderStatusHistory).values({
+          orderId: order.id,
+          type: 'payment_status',
+          status: 'paid',
+          note: 'Thanh toán QR giả lập (demo)',
+          changedBy: 'payment-simulator',
+          changedByUserId: null,
+        });
+      });
+      this.logger.log(`Simulated QR payment for order ${orderNumber}`);
+    }
+
+    return this.findByOrderNumber(orderNumber);
+  }
+
   async findByOrderNumber(orderNumber: string) {
     const order = await db.query.orders.findFirst({
       where: eq(orders.orderNumber, orderNumber),
@@ -494,14 +535,14 @@ export class OrderService {
             let productName = itemDto.productName;
             let price = itemDto.price;
 
-            // If updating existing item, get existing data
-            if (itemDto.id) {
-              const existingItem = await tx.query.orderItems.findFirst({
-                where: eq(orderItems.id, itemDto.id),
-              });
-              if (!existingItem) {
-                throw new NotFoundException(`Order item with ID ${itemDto.id} not found`);
-              }
+            // Items are replaced (deleted and re-inserted) on every update, so an id sent by the
+            // client can be stale after a previous save; it only fills in missing fields
+            const existingItem = itemDto.id
+              ? await tx.query.orderItems.findFirst({
+                  where: and(eq(orderItems.id, itemDto.id), eq(orderItems.orderId, id)),
+                })
+              : undefined;
+            if (existingItem) {
               if (!productId) productId = existingItem.productId;
               if (!productName) productName = existingItem.productName;
               if (price === undefined || price === null) {
