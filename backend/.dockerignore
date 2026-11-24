@@ -5,3 +5,9 @@ Dockerfile
 fly.toml
 fly.production.yoml
 dist
+logs
+coverage
+# Secrets are passed at runtime (env_file), never baked into the image
+.env
+.env.*
+!.env.example

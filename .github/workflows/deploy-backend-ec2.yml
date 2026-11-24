@@ -1,0 +1,69 @@
+# Deploys the backend to EC2 on every push to main that touches it.
+# Required repository secrets (Settings > Secrets and variables > Actions):
+#   EC2_HOST     Elastic IP or hostname of the instance
+#   EC2_USER     SSH user (ubuntu for Ubuntu AMIs)
+#   EC2_SSH_KEY  Private key (.pem contents) allowed to log in
+# Until EC2_HOST is set the job is skipped, so pushes never fail before the server exists.
+name: Deploy backend to EC2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'deploy/ec2/**'
+      - '.github/workflows/deploy-backend-ec2.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend-ec2
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      APP_DIR: base-sale-shop
+    steps:
+      - name: Skip when EC2 is not configured yet
+        if: env.EC2_HOST == ''
+        run: echo "EC2_HOST secret is not set; skipping deploy."
+
+      - name: Configure SSH
+        if: env.EC2_HOST != ''
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/ec2.pem
+          chmod 600 ~/.ssh/ec2.pem
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Pull, rebuild and restart
+        if: env.EC2_HOST != ''
+        run: |
+          ssh -i ~/.ssh/ec2.pem "$EC2_USER@$EC2_HOST" "APP_DIR=$APP_DIR SHA=$GITHUB_SHA bash -s" <<'EOF'
+          set -euo pipefail
+          cd ~/"$APP_DIR"
+          git fetch --quiet origin main
+          git reset --hard "$SHA"
+          docker compose -f deploy/ec2/docker-compose.yml up -d --build
+          docker image prune -f
+          EOF
+
+      - name: Wait for the API to become healthy
+        if: env.EC2_HOST != ''
+        run: |
+          ssh -i ~/.ssh/ec2.pem "$EC2_USER@$EC2_HOST" bash -s <<'EOF'
+          for i in $(seq 1 30); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' base-sale-shop-api-1 2>/dev/null || echo starting)
+            echo "attempt $i: $status"
+            [ "$status" = "healthy" ] && exit 0
+            sleep 5
+          done
+          docker compose -f ~/base-sale-shop/deploy/ec2/docker-compose.yml logs --tail 50 api
+          exit 1
+          EOF

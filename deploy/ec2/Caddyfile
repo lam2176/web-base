@@ -1,0 +1,6 @@
+# Caddy obtains and renews a Let's Encrypt certificate for API_DOMAIN automatically.
+# The domain's DNS A record must point at the instance's Elastic IP, and ports 80/443 must be open.
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:3000
+}

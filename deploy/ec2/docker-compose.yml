@@ -1,0 +1,49 @@
+# Backend on a single EC2 instance: NestJS API behind Caddy (automatic HTTPS).
+# Usage on the server (from the repo root):
+#   cp deploy/ec2/.env.example deploy/ec2/.env     # set API_DOMAIN
+#   cp backend/.env.example backend/.env           # set production secrets
+#   docker compose -f deploy/ec2/docker-compose.yml up -d --build
+name: base-sale-shop
+
+services:
+  api:
+    build:
+      context: ../../backend
+    image: base-sale-shop-api:latest
+    env_file:
+      - ../../backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+    restart: unless-stopped
+    # Not published on the host: only Caddy talks to it
+    expose:
+      - "3000"
+    volumes:
+      - api_logs:/app/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  caddy:
+    image: caddy:2.8.4
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    env_file:
+      - .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  api_logs:
+  caddy_data:
+  caddy_config:

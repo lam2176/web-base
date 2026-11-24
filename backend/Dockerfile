@@ -1,10 +1,8 @@
 # syntax = docker/dockerfile:1
 
-# Adjust NODE_VERSION as desired
-ARG NODE_VERSION=20.18.0
+# Same major version as local development
+ARG NODE_VERSION=22.14.0
 FROM node:${NODE_VERSION}-slim AS base
-
-LABEL fly_launch_runtime="NestJS"
 
 # NestJS app lives here
 WORKDIR /app
@@ -27,7 +25,7 @@ RUN npm ci --include=dev
 # Copy application code
 COPY . .
 
-# Build application
+# Build application (output: dist/src/main.js, locales copied to dist/src/locales)
 RUN npm run build
 
 
@@ -36,12 +34,19 @@ FROM base
 
 # Install only production dependencies
 COPY package-lock.json package.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built application from build stage
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
-# Start the server by default, this can be overwritten at runtime
-EXPOSE 8080
-CMD [ "npm", "run", "start:prod" ]
+# The file logger writes to ./logs; run as the unprivileged node user
+RUN mkdir -p logs && chown -R node:node /app
+USER node
+
+ENV PORT=3000
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+
+CMD [ "node", "dist/src/main.js" ]

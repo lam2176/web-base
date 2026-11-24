@@ -1,0 +1,24 @@
+# AWS Amplify Hosting build settings for the Next.js storefront/admin (SSR).
+# Monorepo: appRoot must equal the AMPLIFY_MONOREPO_APP_ROOT environment variable
+# (set automatically when "My app is a monorepo" is ticked with path "frontend").
+# NEXT_PUBLIC_* variables are read at build time: set them in Amplify's
+# Environment variables before the first build.
+version: 1
+applications:
+  - appRoot: frontend
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*

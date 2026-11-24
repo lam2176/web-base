@@ -19,3 +19,9 @@ Thumbs.db
 .claude
 
 
+
+# Deploy secrets (server-only)
+deploy/ec2/.env
+
+# Local photo library (large; upload through the admin instead)
+images edit/
