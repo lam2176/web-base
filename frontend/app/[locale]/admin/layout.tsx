@@ -22,6 +22,7 @@ import {
   User as UserIcon,
   Globe,
   UserCircle,
+  Store,
 } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
@@ -207,6 +208,20 @@ export default function AdminLayout({
                 : t("adminPanel")}
             </h2>
           </div>
+          <div className="flex items-center gap-2">
+            {/* Opens the storefront in a new tab so the admin session stays open */}
+            <Link
+              href={`/${locale}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+              title={locale === "vi" ? "Mở trang khách hàng trong tab mới" : "Open the storefront in a new tab"}
+            >
+              <Store className="h-5 w-5" />
+              <span className="hidden sm:inline">
+                {locale === "vi" ? "Xem cửa hàng" : "View store"}
+              </span>
+            </Link>
             <button
               onClick={switchLanguage}
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
@@ -220,6 +235,7 @@ export default function AdminLayout({
               </span>
               <span className="sm:hidden">{locale.toUpperCase()}</span>
             </button>
+          </div>
         </header>
 
         {/* Page content */}
