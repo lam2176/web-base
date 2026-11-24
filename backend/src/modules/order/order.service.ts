@@ -489,7 +489,9 @@ export class OrderService {
       throw new NotFoundException('Order not found');
     }
 
-    return await db.transaction(async (tx) => {
+    // Every query inside the transaction must go through `tx`: on Vercel the pool has a single
+    // connection, so a query on `db` would wait for the connection the transaction holds (deadlock)
+    await db.transaction(async (tx) => {
       const updateData: Record<string, any> = {
         updatedAt: new Date(),
       };
@@ -555,7 +557,7 @@ export class OrderService {
               if (!productId) {
                 throw new BadRequestException('Product ID is required');
               }
-              const product = await db.query.products.findFirst({
+              const product = await tx.query.products.findFirst({
                 where: eq(products.id, productId),
               });
               if (!product) {
@@ -648,9 +650,9 @@ export class OrderService {
           changedByUserId: null,
         });
       }
-
-      return this.findById(id);
     });
+
+    return this.findById(id);
   }
 
   private calculateCouponDiscountAmount(

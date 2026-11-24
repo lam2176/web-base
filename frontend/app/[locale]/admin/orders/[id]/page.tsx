@@ -237,7 +237,9 @@ export default function AdminOrderDetail({ params: { locale } }: { params: { loc
       fetchOrderDetail();
     } catch (error) {
       console.error('Failed to update order:', error);
-      const reason = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const response = (error as { response?: { status?: number; data?: { message?: string } } })?.response;
+      // A platform error page (e.g. a function timeout) has no JSON message; show the HTTP status instead
+      const reason = response?.data?.message || (response?.status ? `HTTP ${response.status}` : undefined);
       alert(
         (locale === 'vi' ? 'Không thể cập nhật đơn hàng' : 'Failed to update order') +
           (reason ? `: ${reason}` : '')
